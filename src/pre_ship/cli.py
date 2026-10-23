@@ -170,6 +170,9 @@ def main():
     parser.add_argument('--reason')
     parser.add_argument('--version', action='version', version=f'pre-ship {__version__}')
     args = parser.parse_args()
+    if args.action == 'hook' and sys.stdin.isatty():
+        parser.print_help()
+        return 0
     enforced = args.action in {'hook', 'prepare-commit-msg', 'pre-applypatch', 'commit-msg', 'pre-push'}
     context = {'root': None, 'result': 'block', 'reason': 'interrupted'}
     exempted = False
@@ -186,7 +189,7 @@ def main():
         return current
 
     try:
-        if enforced and not agent_process():
+        if enforced and args.action != 'hook' and not agent_process():
             context.update(result='allow', reason='human')
             return 0
         cwd = Path(args.cwd).expanduser().resolve()

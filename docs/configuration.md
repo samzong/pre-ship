@@ -17,7 +17,7 @@ The review command has no default executable.
 
 | Field | Default | Meaning |
 | --- | --- | --- |
-| `agent_markers` | `["CLAUDECODE", "AI_AGENT", "CLAUDE_CODE_SESSION_ID", "CODEX_SESSION_ID", "CODEX_THREAD_ID"]` | Environment variable names that identify an agent process. An empty list disables agent enforcement. |
+| `agent_markers` | `["CLAUDECODE", "AI_AGENT", "CLAUDE_CODE_SESSION_ID", "CODEX_SESSION_ID", "CODEX_THREAD_ID"]` | Environment variable names that identify an agent process. An empty list disables Git hook enforcement. |
 | `exemption_reply` | `"EXEMPT"` | Literal owner reply required to record an exemption. It must contain 1 to 100 characters, including a non-space character. |
 | `review.command` | `[]` | Command arguments, executed without a shell from the repository root. Each argument must be a nonempty string. |
 | `gitleaks.mode` | `"optional"` | `optional` runs an installed scanner and warns when absent. `required` blocks when absent or failed. `off` skips scanning. |
@@ -32,11 +32,13 @@ An external workflow can supply a receipt through [`record`](reviewer.md#externa
 
 An agent is any process with a nonempty variable from `agent_markers`.
 Configure this list to match the hosts that you use.
-An empty list disables agent enforcement.
+An empty list disables Git hook enforcement.
 
 When all configured markers are empty, human operations bypass every pre-ship check.
 This includes receipts, sign-off, size, secret scanning, and push policy.
-The PreToolUse guard also acts only in an identified agent process.
+The PreToolUse guard ignores these markers and runs on every call, because only agent hosts invoke it.
+Codex, for example, starts hook processes without its session markers.
+The guard stays active until `uninstall`.
 
 ## Invalid configuration
 

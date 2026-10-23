@@ -19,6 +19,6 @@ These paths bypass some or all checks:
 
 ## PreToolUse coverage
 
-The PreToolUse guard acts only in an [identified agent process](configuration.md#agent-detection).
+The PreToolUse guard runs on every host call, regardless of [agent markers](configuration.md#agent-detection).
 It rejects recognizable `--no-verify` and commit `-n` commands, hook or alias overrides, `send-pack`, and Git configuration or index environment overrides.
 It is a limited shell parser. It does not claim coverage of arbitrary shell programs.
