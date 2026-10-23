@@ -55,14 +55,36 @@ class GitHookTests(GitHookFixture):
         for key in ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID']:
             self.env.pop(key, None)
 
-    def test_manual_git_commands_skip_receipts_and_all_gate_policy(self):
+    def test_manual_commits_run_content_checks_without_receipts(self):
         self.manual_environment()
-        self.stage('file', 'trailing \n' + 'x' * 20001 + '\naws_access_key_id = AKIA' + 'QWERTYUIOPASDFGH\n')
-        self.run_git('commit', '-m', 'unsigned without policy', code=0)
+        secret = 'AKIA' + 'QWERTYUIOPASDFGH'
+        for path, content, expected in [
+            ('spaces.txt', 'trailing \n', 'Staged whitespace check failed'),
+            ('large.md', 'x' * 20001, '5,001 tokens'),
+            ('credentials.txt', 'aws_access_key_id = ' + secret + '\n', 'Staged secret scan failed'),
+        ]:
+            with self.subTest(path=path):
+                self.stage(path, content)
+                result = self.run_git('commit', '-sm', 'manual', code=1)
+                self.assertIn(expected, result.stderr)
+                self.assertNotIn(secret, result.stdout + result.stderr)
+                self.run_git('rm', '-q', '--cached', '--', path)
+                (self.repo / path).unlink()
+        self.stage('file', 'clean\n')
+        self.assertIn('Signed-off-by', self.run_git('commit', '-m', 'unsigned', code=1).stderr)
+        self.run_git('commit', '-qsm', 'signed without receipt')
+
+    def test_manual_pushes_skip_push_policy(self):
+        self.manual_environment()
+        self.stage('file', 'clean\n')
+        self.run_git('commit', '-qsm', 'signed')
         remote = self.root / 'manual.git'
         self.run_git('init', '--bare', '-q', str(remote))
         self.run_git('push', str(remote), 'HEAD:refs/heads/main')
-        self.run_git('push', str(remote), 'HEAD:refs/heads/feat/probe')
+        self.run_git('push', str(remote), 'HEAD:refs/heads/feat/probe', 'HEAD:refs/heads/feat/second')
+        self.run_git('tag', 'v0.0.1')
+        self.run_git('push', str(remote), 'v0.0.1')
+        self.run_git('push', str(remote), ':refs/heads/feat/second')
         self.run_git('checkout', '--detach', '-q')
         self.run_git('push', str(remote), 'HEAD:refs/heads/feat/detached')
 

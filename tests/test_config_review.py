@@ -192,15 +192,17 @@ class ConfigurationReviewTests(unittest.TestCase):
             self.assertTrue(checks.agent_process())
             blocked = subprocess.run(['git', '-C', str(self.repo), 'commit', '-m', 'blocked'], capture_output=True, text=True)
             self.assertNotEqual(0, blocked.returncode)
-        self.git('commit', '-qm', 'human without sign-off')
+        self.git('commit', '-qsm', 'human without receipt')
 
-    def test_invalid_configuration_blocks_default_agents_but_not_human_commits(self):
+    def test_invalid_configuration_blocks_agent_and_human_commits(self):
         self.install()
         self.configure('not valid toml')
-        blocked = subprocess.run(['git', '-C', str(self.repo), 'commit', '-m', 'agent blocked'], capture_output=True, text=True)
+        blocked = subprocess.run(['git', '-C', str(self.repo), 'commit', '-sm', 'agent blocked'], capture_output=True, text=True)
         self.assertNotEqual(0, blocked.returncode)
         with patch.dict(os.environ, {key: '' for key in config.DEFAULTS['agent_markers']}):
-            self.git('commit', '-qm', 'human without sign-off')
+            human = subprocess.run(['git', '-C', str(self.repo), 'commit', '-sm', 'human blocked'], capture_output=True, text=True)
+            self.assertNotEqual(0, human.returncode)
+            self.assertIn('Repair the TOML file', human.stderr)
 
     def test_configured_hooks_path_runs_alongside_named_review_hooks(self):
         hooks = self.root / 'existing hooks'

@@ -1,12 +1,13 @@
 # Gate rules
 
-These rules apply only to [identified agent processes](configuration.md#agent-detection).
-Human operations with all configured markers empty bypass every pre-ship check.
+Receipts and push rules apply only to [identified agent processes](configuration.md#agent-detection).
+Human commits, with all configured markers empty, still run the content checks.
 Lint and tests remain the responsibility of the repository and configured reviewer.
 
 ## Commit checks
 
-Agent commits require a current [receipt](reviewer.md#receipt-lifecycle), valid whitespace, acceptable file sizes, a passing enabled secret scan, and sign-off.
+Every commit requires valid whitespace, acceptable file sizes, a passing enabled secret scan, and sign-off.
+Agent commits also require a current [receipt](reviewer.md#receipt-lifecycle).
 `git commit -s` supplies the `Signed-off-by` trailer.
 An exemption never disables these mechanical checks.
 
@@ -22,7 +23,7 @@ Install [gitleaks](https://github.com/gitleaks/gitleaks) separately if you use s
 The [`gitleaks.mode`](configuration.md#fields) field accepts three values:
 
 - `optional`: Run gitleaks when installed. If it is missing, continue with an explicit warning. This is the default.
-- `required`: Block agent commits when gitleaks is missing or fails.
+- `required`: Block commits when gitleaks is missing or fails.
 - `off`: Do not run gitleaks.
 
 An installed gitleaks that reports findings or fails blocks both `optional` and `required` modes.
@@ -48,3 +49,7 @@ After a replay stops, review the applied index, obtain a receipt, and commit wit
 For rebase, continue after that commit.
 `git am` uses `pre-applypatch` to check its applied index.
 A fast-forward creates no commit and runs no commit hook.
+Human merges, reverts, cherry-picks, rebases, and patch applications also need sign-off, for example `git merge --signoff`, `git pull --signoff`, `git revert -s`, `git cherry-pick -s`, `git rebase --signoff`, or `git am -s`.
+Add the trailer through these flags; the commit hook checks it before the editor opens.
+A merge commit runs the size and secret checks on everything new relative to `HEAD`, including content the other parent already contains.
+Use `.git/info/attributes` when an existing large file blocks a merge.
