@@ -48,7 +48,7 @@ pre-ship review committed
 git push -u origin HEAD
 ```
 
-Human commits and pushes pass through unchanged when all configured agent markers are empty.
+When all configured agent markers are empty, commits run the same content checks without a receipt, and pushes pass through unchanged.
 Existing review workflows can use [`record`](docs/reviewer.md#external-review-and-record) after review passes for the exact target.
 
 ## Documentation

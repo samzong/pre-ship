@@ -189,7 +189,7 @@ def main():
         return current
 
     try:
-        if enforced and args.action != 'hook' and not agent_process():
+        if args.action == 'pre-push' and not agent_process():
             context.update(result='allow', reason='human')
             return 0
         cwd = Path(args.cwd).expanduser().resolve()
