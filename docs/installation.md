@@ -53,10 +53,6 @@ Installation is idempotent.
 If a write fails after an earlier write succeeds, registration can be partial.
 Repair the reported file, rerun `install`, and run `doctor`.
 
-When `review.command` is not configured, human output from `install` includes the next configuration step.
-The message gives the configuration path, a [configuration reference](configuration.md), and the `doctor` command.
-Set `review.command` in the global configuration before you run `review`.
-
 ## Diagnostics
 
 Run `doctor` to inspect registration, Git support, configuration, and the secret scanner:
@@ -65,11 +61,10 @@ Run `doctor` to inspect registration, Git support, configuration, and the secret
 pre-ship doctor --cwd /path/to/repository
 ```
 
-The default output lists each check and groups shared repair steps below the results.
-Configuration guidance links to the online reference, including after a tool installation.
+The default output lists each check and groups repair steps for failed checks below the results.
 The command returns a nonzero exit code when registration, Git support, configuration, or required gitleaks fails.
 Disabled Git or host hooks appear as failures.
-An unconfigured reviewer is informational because an external workflow can use [`record`](reviewer.md#external-review-and-record).
+For an empty `review.command`, see [external review and record](reviewer.md#external-review-and-record).
 
 Run `doctor --json` for a machine-readable report.
 

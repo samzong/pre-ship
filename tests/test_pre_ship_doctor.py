@@ -43,6 +43,27 @@ class RegistrationTests(GitHookFixture):
         self.assertEqual(code, result.returncode, result.stderr)
         return json.loads(result.stdout)
 
+    def test_external_and_command_reviews_are_successful_without_repair_steps(self):
+        self.settings('claude')
+        self.settings('codex')
+        self.env['NO_COLOR'] = '1'
+        configuration = self.root / '.config/pre-ship/config.toml'
+        configuration.parent.mkdir(parents=True)
+        for command, status, display in [([], 'not_configured', '[info] review: not configured'), (['private-review-command'], 'configured', '[ok] review: configured')]:
+            with self.subTest(status=status):
+                configuration.write_text('[gitleaks]\nmode = "off"\n[review]\ncommand = ' + json.dumps(command) + '\n')
+                result = subprocess.run([str(SCRIPT), 'doctor'], cwd=self.repo, env=self.env, capture_output=True, text=True)
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertIn(display, result.stdout)
+                self.assertNotIn('Next steps', result.stdout)
+                self.assertNotIn('private-review-command', result.stdout)
+                data = self.doctor(0)
+                review = next(row for row in data['checks'] if row['component'] == 'review')
+                self.assertEqual(status, review['status'])
+                self.assertNotIn('Configure', review['note'])
+                self.assertNotIn('Set review.command', review['note'])
+                self.assertNotIn('private-review-command', json.dumps(data))
+
     def test_scanner_repairs_only_describe_required_missing_scanners(self):
         self.settings('claude')
         self.settings('codex')
@@ -63,7 +84,7 @@ class RegistrationTests(GitHookFixture):
                     self.assertIn('Install gitleaks', result.stdout)
                 else:
                     self.assertNotIn('Install gitleaks', result.stdout)
-                self.assertIn('Set review.command', result.stdout)
+                self.assertIn('[info] review: not configured', result.stdout)
 
     def test_disabled_host_is_reported_as_failure_in_human_diagnostics(self):
         path = self.settings('claude')

@@ -24,9 +24,9 @@ pre-ship doctor --cwd /path/to/repository
 Installation preserves unrelated configuration and leaves `core.hooksPath` available for other tools.
 See [installation](docs/installation.md) for host setup, Codex trust, repairs, and removal.
 
-## Configure a reviewer
+## Configure a command-based reviewer
 
-Create `~/.config/pre-ship/config.toml`, or use the [XDG configuration path](docs/configuration.md#configuration-path):
+If you want pre-ship to run a reviewer, create `~/.config/pre-ship/config.toml` or use the [XDG configuration path](docs/configuration.md#configuration-path):
 
 ```toml
 [review]
@@ -88,16 +88,18 @@ On success, `--json` writes only JSON to stdout. Errors use text on stderr and k
 `review --json` and `record --json` print the receipt object.
 `doctor --json` keeps its existing `configuration`, `checks`, and `scope` fields.
 The report goes to stdout when a check fails, and the command keeps its failure exit code.
+The `review` check's `status` is `configured` when `review.command` is nonempty and `not_configured` when it is empty.
+Human output shows `[ok] review: configured` for a configured command and `[info] review: not configured` when it is empty.
+The review row never appears under `Next steps`.
 `events --json` keeps its existing `counts` and `skipped` fields.
 `install --json` prints the same report as `doctor --json`.
 If that report shows a doctor failure, `install` still prints the report to stdout and keeps its failure exit code.
+Human `install` output reuses the `doctor` report and adds no reviewer configuration step.
 `uninstall --json` prints an object with `action` and `scope` fields.
 Without `--json`, `uninstall` prints: “Only registrations for this exact helper were removed. Other configuration was preserved.”
 
 For an `EXEMPTED` receipt, human output shows the status once on stdout.
 With `--json`, the receipt stays on stdout and the exemption warning goes to stderr.
-
-See [installation guidance](docs/installation.md#removal-and-repair) for the next configuration steps when `review.command` is not configured.
 
 Python 3.14 adds color to argparse help output. Python 3.11 through 3.13 show plain help.
 The standard library controls color with `NO_COLOR` and `FORCE_COLOR`.

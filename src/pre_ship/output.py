@@ -2,8 +2,6 @@ import json
 import os
 import sys
 
-from .config import CONFIGURATION_URL
-
 
 def print_receipt(path, *, as_json):
     value = json.loads(path.read_text())
@@ -46,7 +44,7 @@ def print_doctor(value, *, as_json):
             label = f'\033[{32 if ok else 31}m{label}\033[0m'
         detail = row.get('version', row.get('mode', row.get('path', '')))
         print(f'[{label}] {row["component"]}: {status.replace("_", " ")} {detail}'.rstrip())
-        if not ok and (not informational or row['component'] == 'review'):
+        if not ok and not informational:
             component = row['component']
             if component == 'git':
                 repairs['git'] = 'Upgrade Git to 2.54.0 or later.'
@@ -54,8 +52,6 @@ def print_doctor(value, *, as_json):
                 repairs['registration'] = 'Run pre-ship install. If checks still fail, repair disabled or conflicting Git or host hooks. Preserve unrelated hooks.'
             elif component == 'gitleaks':
                 repairs['gitleaks'] = 'Install gitleaks to scan commits, or set gitleaks.mode in the configuration to match your scan policy. ' + row['note']
-            elif component == 'review':
-                repairs['review'] = f'Set review.command in {value["configuration"]}. See {CONFIGURATION_URL}, then run pre-ship doctor. External review workflows can use pre-ship record.'
     if repairs:
         print('Next steps:')
         for repair in repairs.values():
