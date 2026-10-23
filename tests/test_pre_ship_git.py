@@ -30,7 +30,10 @@ class GitHookFixture(unittest.TestCase):
 
     def run_git(self, *args, code=0):
         result = subprocess.run([self.git_bin, '-C', str(self.repo), *args], env=self.env, capture_output=True, text=True)
-        self.assertEqual(code, result.returncode, result.stdout + result.stderr)
+        if code is None:
+            self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
+        else:
+            self.assertEqual(code, result.returncode, result.stdout + result.stderr)
         return result
 
     def stage(self, path, content):
@@ -239,11 +242,13 @@ class GitHookTests(GitHookFixture):
         self.run_git('checkout', '-q', 'feat/probe')
         self.stage('other', 'other\n')
         self.commit('other')
-        self.assertIn('PASS receipt', self.run_git('cherry-pick', source, code=128).stderr)
+        self.assertIn('PASS receipt', self.run_git('cherry-pick', source, code=None).stderr)
+        self.run_git('rev-parse', '-q', '--verify', 'CHERRY_PICK_HEAD')
         self.record()
         self.run_git('commit', '-s', '--no-edit', '-q')
         self.run_git('reset', '--hard', base)
-        self.assertIn('PASS receipt', self.run_git('merge', '--no-ff', source, code=1).stderr)
+        self.assertIn('PASS receipt', self.run_git('merge', '--no-ff', source, code=None).stderr)
+        self.run_git('rev-parse', '-q', '--verify', 'MERGE_HEAD')
         self.record()
         self.run_git('commit', '-s', '--no-edit', '-q')
         self.run_git('checkout', '-q', 'feat/source')
@@ -253,7 +258,8 @@ class GitHookTests(GitHookFixture):
         self.stage('third', 'third\n')
         self.commit('third')
         self.run_git('checkout', '-q', 'feat/source')
-        self.assertIn('PASS receipt', self.run_git('rebase', 'feat/probe', code=1).stderr)
+        self.assertIn('PASS receipt', self.run_git('rebase', 'feat/probe', code=None).stderr)
+        self.run_git('rev-parse', '-q', '--verify', 'REBASE_HEAD')
         self.record()
         self.run_git('commit', '-s', '--no-edit', '-q')
         self.run_git('rebase', '--continue')
