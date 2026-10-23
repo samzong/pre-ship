@@ -101,9 +101,11 @@ class PreShipGateTests(unittest.TestCase):
         result = subprocess.run([str(SCRIPT), 'prepare-commit-msg', '.git/COMMIT_EDITMSG'], cwd=self.repo, env=env, capture_output=True, text=True)
         self.assertEqual(1, result.returncode)
         self.assertEqual([], list((home / '.cache' / 'pre-ship').glob('????????????????.json')))
-        result = subprocess.run([str(SCRIPT), 'record'], cwd=self.repo, env=env, capture_output=True, text=True)
+        result = subprocess.run([str(SCRIPT), 'record', '--json'], cwd=self.repo, env=env, capture_output=True, text=True)
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertTrue(Path(result.stdout.strip()).is_file())
+        value = json.loads(result.stdout)
+        self.assertEqual(str(self.repo), value['root'])
+        self.assertEqual(1, len(list((home / '.cache/pre-ship').glob('????????????????.json'))))
         result = subprocess.run([str(SCRIPT), 'record'], cwd=self.root, env=env, capture_output=True, text=True)
         self.assertEqual(1, result.returncode)
 

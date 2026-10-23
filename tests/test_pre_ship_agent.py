@@ -73,7 +73,7 @@ class AgentBypassTests(unittest.TestCase):
                 for command, denied in [(shlex.join(args), True), (shlex.join(read), False)]:
                     with self.subTest(command=command):
                         payload = {'cwd': str(self.cwd), 'tool_input': {'command': command}}
-                        result = subprocess.run([str(SCRIPT)], input=json.dumps(payload), capture_output=True, text=True)
+                        result = subprocess.run([str(SCRIPT), 'hook'], input=json.dumps(payload), capture_output=True, text=True)
                         self.assertEqual(0, result.returncode)
                         if denied:
                             self.assertEqual('deny', json.loads(result.stdout)['hookSpecificOutput']['permissionDecision'])
@@ -107,14 +107,14 @@ class AgentBypassTests(unittest.TestCase):
     def test_hook_entrypoint_denies_without_agent_markers(self):
         os.environ.pop('AI_AGENT')
         payload = {'cwd': str(self.cwd), 'tool_input': {'command': 'git commit --no-verify'}}
-        result = subprocess.run([str(SCRIPT)], input=json.dumps(payload), capture_output=True, text=True)
+        result = subprocess.run([str(SCRIPT), 'hook'], input=json.dumps(payload), capture_output=True, text=True)
         self.assertEqual(0, result.returncode)
         self.assertEqual('deny', json.loads(result.stdout)['hookSpecificOutput']['permissionDecision'])
         payload['tool_input']['command'] = "*** Begin Patch\n*** Update File: example\n+Owner's rule\n*** End Patch"
-        result = subprocess.run([str(SCRIPT)], input=json.dumps(payload), capture_output=True, text=True)
+        result = subprocess.run([str(SCRIPT), 'hook'], input=json.dumps(payload), capture_output=True, text=True)
         self.assertEqual('', result.stdout)
         payload['tool_input']['command'] += '\ngit commit --no-verify'
-        result = subprocess.run([str(SCRIPT)], input=json.dumps(payload), capture_output=True, text=True)
+        result = subprocess.run([str(SCRIPT), 'hook'], input=json.dumps(payload), capture_output=True, text=True)
         self.assertEqual('deny', json.loads(result.stdout)['hookSpecificOutput']['permissionDecision'])
 
     def test_env_clearing_and_option_arguments_do_not_hide_git(self):

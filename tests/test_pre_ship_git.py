@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -41,9 +42,10 @@ class GitHookFixture(unittest.TestCase):
         self.run_git('add', '--', path)
 
     def record(self, mode='staged'):
-        result = subprocess.run([str(SCRIPT), 'record', mode], cwd=self.repo, env=self.env, capture_output=True, text=True)
+        result = subprocess.run([str(SCRIPT), 'record', mode, '--json'], cwd=self.repo, env=self.env, capture_output=True, text=True)
         self.assertEqual(0, result.returncode, result.stderr)
-        return Path(result.stdout.strip())
+        root = json.loads(result.stdout)['root']
+        return self.root / '.cache/pre-ship' / (hashlib.sha256(root.encode()).hexdigest()[:16] + '.json')
 
     def commit(self, message='fixture'):
         self.record()

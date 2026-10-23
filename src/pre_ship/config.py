@@ -4,6 +4,8 @@ from pathlib import Path
 import re
 import tomllib
 
+CONFIGURATION_URL = 'https://github.com/samzong/pre-ship/blob/main/docs/configuration.md'
+
 DEFAULTS = {
     'agent_markers': ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID'],
     'exemption_reply': 'EXEMPT',
@@ -34,10 +36,10 @@ def load_config():
     result = deepcopy(DEFAULTS)
     for key, value in data.items():
         if key not in result:
-            raise ValueError('Unknown pre-ship configuration key. Use the configuration reference in docs/configuration.md.')
+            raise ValueError(f'Unknown pre-ship configuration key. Use the configuration reference at {CONFIGURATION_URL}.')
         if isinstance(result[key], dict):
             if not isinstance(value, dict) or set(value) - set(result[key]):
-                raise ValueError('Invalid pre-ship configuration table. Use the configuration reference in docs/configuration.md.')
+                raise ValueError(f'Invalid pre-ship configuration table. Use the configuration reference at {CONFIGURATION_URL}.')
             result[key].update(value)
         else:
             result[key] = value
