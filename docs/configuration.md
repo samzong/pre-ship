@@ -2,7 +2,7 @@
 
 pre-ship uses one global policy for all repositories.
 There is no repository override, so a repository cannot silently weaken that policy.
-See the [reviewer contract](reviewer.md) before you configure a review command.
+See the [reviewer contract](reviewer.md) for command-based and external review.
 
 ## Configuration path
 
@@ -25,8 +25,10 @@ The review command has no default executable.
 | `push.allow_protected` | `false` | Allows agent pushes to protected branches when true. Other push checks still apply. |
 
 Keep credentials out of the command arguments. Use the reviewer's existing credential mechanism.
-A missing command blocks `review`. Git operations that require a receipt remain blocked without one.
-An external workflow can supply a receipt through [`record`](reviewer.md#external-review-and-record).
+An empty `review.command` array is a valid default when an external workflow owns review.
+You do not need to configure a command for that workflow.
+See [external review and record](reviewer.md#external-review-and-record) for the receipt procedure.
+Git operations that require a receipt remain blocked without one.
 
 ## Agent detection
 

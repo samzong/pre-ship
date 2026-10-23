@@ -52,7 +52,8 @@ def receipt_path(root):
 def review(cwd, mode):
     command = load_config()['review']['command']
     if not command:
-        raise GateError('review', 'No review command is configured. Set review.command in the global pre-ship configuration.')
+        raise GateError('review', 'No review command is configured. Set review.command in the global pre-ship configuration. '
+            f'For an external review workflow, run pre-ship record {mode} after that review passes.')
     current = target(cwd, mode)
     path = receipt_path(current['root'])
     path.unlink(missing_ok=True)
@@ -124,10 +125,14 @@ def check(cwd, mode, *, freshness=True):
     except (OSError, ValueError, TypeError, KeyError):
         valid = False
     if not valid:
+        root = shlex.quote(current['root'])
+        if load_config()['review']['command']:
+            guidance = f'Run pre-ship review {mode} --cwd {root}.'
+        else:
+            guidance = f'No review command is configured. After an external review passes for this exact target, run pre-ship record {mode} --cwd {root}.'
         raise GateError('receipt',
-            f'No current {mode} PASS receipt or EXEMPTED receipt for {shlex.quote(current["root"])}. '
-            f'Run pre-ship review {mode} --cwd {shlex.quote(current["root"])}. '
-            'For an external review workflow, record this exact target only after that workflow passes. '
+            f'No current {mode} PASS receipt or EXEMPTED receipt for {root}. '
+            f'{guidance} '
             'Do not use --no-verify.'
         )
     return dict(current, verdict=value['verdict'])

@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import shlex
 import subprocess
 import tempfile
 import unittest
@@ -40,6 +41,39 @@ class PreShipGateTests(unittest.TestCase):
 
     def git(self, *args):
         return subprocess.run(['git', '-C', str(self.repo), *args], env=self.env, check=True, capture_output=True, text=True).stdout
+
+    def test_missing_receipt_guidance_matches_the_configured_review_source(self):
+        self.git('commit', '-qsm', 'base')
+        configuration = self.root / '.config/pre-ship/config.toml'
+        configuration.parent.mkdir(parents=True)
+        for command in [[], ['private-review-command']]:
+            configuration.write_text('[review]\ncommand = ' + json.dumps(command) + '\n')
+            for mode in ['staged', 'committed']:
+                with self.subTest(command=bool(command), mode=mode):
+                    with self.assertRaises(gate.GateError) as raised:
+                        gate.check(self.repo, mode)
+                    message = str(raised.exception)
+                    self.assertIn(f'No current {mode} PASS receipt or EXEMPTED receipt', message)
+                    self.assertIn(f'--cwd {shlex.quote(str(self.repo))}', message)
+                    self.assertTrue(message.endswith('Do not use --no-verify.'))
+                    self.assertNotIn('private-review-command', message)
+                    if command:
+                        self.assertIn(f'Run pre-ship review {mode}', message)
+                        self.assertNotIn('pre-ship record', message)
+                        self.assertNotIn('external review', message)
+                    else:
+                        self.assertIn(f'pre-ship record {mode}', message)
+                        self.assertIn('After an external review passes for this exact target', message)
+                        self.assertNotIn('Run pre-ship review', message)
+
+    def test_review_without_command_preserves_configuration_error_and_offers_record(self):
+        for mode in ['staged', 'committed']:
+            with self.subTest(mode=mode), self.assertRaises(gate.GateError) as raised:
+                gate.review(self.repo, mode)
+            message = str(raised.exception)
+            self.assertIn('Set review.command', message)
+            self.assertIn(f'pre-ship record {mode}', message)
+            self.assertIn('after that review passes', message)
 
     def test_initial_staged_and_root_committed_reviews_track_content(self):
         unborn = gate.target(self.repo, 'staged')

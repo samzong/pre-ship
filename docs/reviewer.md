@@ -77,8 +77,9 @@ A committed receipt covers the last commit at HEAD, not all commits in a push.
 
 ## External review and record
 
-If an existing workflow produces the review verdict, keep that workflow as the owner of the verdict.
-After it passes for the exact staged target, record that target:
+An empty `review.command` is valid and is the default for an external review workflow.
+The external workflow owns the review verdict. The `review` command still requires a configured command.
+Use `record` after an external review passes for the exact target. `record` works whether `review.command` is empty or configured:
 
 ```sh
 pre-ship record staged --cwd /path/to/repository
@@ -89,6 +90,16 @@ Before push, review the committed target and run `pre-ship record committed`.
 `record` does not run a review or tests. It is an attestation for an external workflow.
 Never call it after a failed review or for content that changed after review.
 `record` defaults to staged. `--mode staged` and `--mode committed` also work.
+
+If you run `review` with an empty `review.command`, it fails with `No review command is configured. Set review.command in the global pre-ship configuration.`
+The error also says: `For an external review workflow, run pre-ship record {mode} after that review passes.`
+
+The missing-receipt message starts with `No current {mode} PASS receipt or EXEMPTED receipt for {quoted-root}.`
+It ends with `Do not use --no-verify.`
+`{mode}` is `staged` or `committed`. `{quoted-root}` is the shell-quoted repository root.
+When `review.command` is configured, the only next step is `Run pre-ship review {mode} --cwd {quoted-root}.`
+When `review.command` is empty, the next step begins `No review command is configured.`
+It then says `After an external review passes for this exact target, run pre-ship record {mode} --cwd {quoted-root}.`
 
 ## Exemptions
 
