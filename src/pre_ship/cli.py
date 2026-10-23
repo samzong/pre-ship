@@ -1,4 +1,3 @@
-import argparse
 import hashlib
 import json
 import os
@@ -11,7 +10,9 @@ import tempfile
 import time
 
 from . import __version__
+from .arguments import parse_arguments
 from .config import load_config
+from .output import print_events, print_receipt
 from .agent import guard
 from .events import GateError, log_event, event_summary
 from .git import agent_process, commit_message, prepare_commit, push_refs
@@ -160,19 +161,9 @@ def repository_root(cwd):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='pre-ship', description='Review gates for AI coding agents before Git commits and pushes.')
-    parser.add_argument('action', nargs='?', choices=['review', 'record', 'hook', 'prepare-commit-msg', 'pre-applypatch', 'commit-msg', 'pre-push', 'events', 'doctor', 'install', 'uninstall'], default='hook')
-    parser.add_argument('values', nargs='*')
-    parser.add_argument('--mode', choices=['staged', 'committed'])
-    parser.add_argument('--cwd', default='.')
-    parser.add_argument('--verdict', choices=['PASS', 'EXEMPTED'], default='PASS')
-    parser.add_argument('--reply')
-    parser.add_argument('--reason')
-    parser.add_argument('--version', action='version', version=f'pre-ship {__version__}')
-    args = parser.parse_args()
+    args = parse_arguments(sys.argv[1:], __version__)
     if args.action == 'hook' and sys.stdin.isatty():
-        parser.print_help()
-        return 0
+        parse_arguments(['--help'], __version__)
     enforced = args.action in {'hook', 'prepare-commit-msg', 'pre-applypatch', 'commit-msg', 'pre-push'}
     context = {'root': None, 'result': 'block', 'reason': 'interrupted'}
     exempted = False
@@ -198,22 +189,21 @@ def main():
         if args.action != 'record' and (args.verdict != 'PASS' or args.reply is not None or args.reason is not None):
             raise ValueError('Exemption fields are valid only for record.')
         if args.action == 'events':
-            print(json.dumps(event_summary()))
+            print_events(event_summary(), as_json=args.json)
         elif args.action == 'doctor':
             from .doctor import doctor
-            return doctor(cwd, Path(sys.argv[0]).absolute())
+            return doctor(cwd, Path(sys.argv[0]).absolute(), as_json=args.json)
         elif args.action in {'install', 'uninstall'}:
             from .install import configure
-            return configure(cwd, Path(sys.argv[0]).absolute(), install=args.action == 'install')
+            return configure(cwd, Path(sys.argv[0]).absolute(), install=args.action == 'install', as_json=args.json)
         elif args.action in {'review', 'record'}:
-            mode = args.mode or (args.values[0] if args.values else 'staged')
-            if mode not in {'staged', 'committed'} or len(args.values) > 1:
-                parser.error('review and record accept staged or committed')
+            mode = args.mode or args.target_mode or 'staged'
             if args.action == 'review':
-                print(review(cwd, mode))
+                path = review(cwd, mode)
             else:
-                print(record(cwd, mode, verdict=args.verdict, reply=args.reply, reason=args.reason))
-            if args.verdict == 'EXEMPTED':
+                path = record(cwd, mode, verdict=args.verdict, reply=args.reply, reason=args.reason)
+            print_receipt(path, as_json=args.json)
+            if args.verdict == 'EXEMPTED' and args.json:
                 print('Pre-Ship: UNVERIFIED — EXEMPTED', file=sys.stderr)
         elif args.action == 'hook':
             hook(context)

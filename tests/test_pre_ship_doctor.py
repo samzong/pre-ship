@@ -3,6 +3,7 @@ from types import SimpleNamespace
 import os
 import shlex
 import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -38,9 +39,46 @@ class RegistrationTests(GitHookFixture):
         return path
 
     def doctor(self, code):
-        result = subprocess.run([str(SCRIPT), 'doctor', '--cwd', str(self.repo)], env=self.env, capture_output=True, text=True)
+        result = subprocess.run([str(SCRIPT), 'doctor', '--json', '--cwd', str(self.repo)], env=self.env, capture_output=True, text=True)
         self.assertEqual(code, result.returncode, result.stderr)
         return json.loads(result.stdout)
+
+    def test_scanner_repairs_only_describe_required_missing_scanners(self):
+        self.settings('claude')
+        self.settings('codex')
+        commands = self.root / 'commands'
+        commands.mkdir()
+        (commands / 'git').symlink_to(self.git_bin)
+        (commands / 'python3').symlink_to(sys.executable)
+        self.env['PATH'] = str(commands)
+        self.env['NO_COLOR'] = '1'
+        configuration = self.root / '.config/pre-ship/config.toml'
+        configuration.parent.mkdir(parents=True)
+        for mode, code in [('off', 0), ('optional', 0), ('required', 1)]:
+            with self.subTest(mode=mode):
+                configuration.write_text(f'[gitleaks]\nmode = "{mode}"\n')
+                result = subprocess.run([str(SCRIPT), 'doctor'], cwd=self.repo, env=self.env, capture_output=True, text=True)
+                self.assertEqual(code, result.returncode, result.stderr)
+                if mode == 'required':
+                    self.assertIn('Install gitleaks', result.stdout)
+                else:
+                    self.assertNotIn('Install gitleaks', result.stdout)
+                self.assertIn('Set review.command', result.stdout)
+
+    def test_disabled_host_is_reported_as_failure_in_human_diagnostics(self):
+        path = self.settings('claude')
+        self.settings('codex')
+        self.env['NO_COLOR'] = '1'
+        result = subprocess.run([str(SCRIPT), 'doctor'], cwd=self.repo, env=self.env, capture_output=True, text=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertIn('[info] review: not configured', result.stdout)
+        self.assertNotIn('[fail]', result.stdout)
+        data = json.loads(path.read_text())
+        data['disableAllHooks'] = True
+        path.write_text(json.dumps(data))
+        result = subprocess.run([str(SCRIPT), 'doctor'], cwd=self.repo, env=self.env, capture_output=True, text=True)
+        self.assertEqual(1, result.returncode, result.stderr)
+        self.assertIn('[fail] claude:', result.stdout)
 
     def test_global_hooks_and_agent_entries_are_checked_without_writes(self):
         claude = self.settings('claude')

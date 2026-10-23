@@ -32,6 +32,31 @@ pre-ship discards the command's stdout and stderr to avoid leaking review conten
 For diagnostics, run the reviewer directly or configure it to write a private report.
 Keep credentials out of the argument array.
 
+## CLI output
+
+`review` runs the configured reviewer and records a receipt for the exact target.
+It defaults to staged. Use `review staged` or `review --mode staged` for the staged target.
+Use `review committed` or `review --mode committed` for the last commit.
+
+```sh
+pre-ship review staged
+pre-ship review --mode committed --json
+```
+
+`record` records a receipt after an external review passes for the exact target.
+It uses the same target selection as `review` and defaults to staged.
+Use `--json` with `review` or `record` to print a receipt object instead of human-readable output.
+
+```sh
+pre-ship record staged --json
+```
+
+The JSON receipt contains `version`, `root`, `head`, `tree`, `mode`, `fingerprint`, `verdict`, and `created_at`.
+`version` is `2`. An `EXEMPTED` receipt also contains `reply` and `reason`.
+The `root`, `head`, `tree`, `mode`, and `fingerprint` fields identify the reviewed target.
+
+See the [command output contract](../README.md#output-contract) for stdout, stderr, and exit code behavior.
+
 ## Receipt lifecycle
 
 A receipt is a local record bound to a reviewed Git target.

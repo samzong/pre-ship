@@ -7,6 +7,7 @@ import re
 import shutil
 
 from .config import config_path, load_config
+from .output import print_doctor
 
 HOOKS = {'prepare': 'prepare-commit-msg', 'message': 'commit-msg', 'apply': 'pre-applypatch', 'push': 'pre-push'}
 
@@ -84,7 +85,7 @@ def git_version():
     return supported, result.stdout.strip() if match else 'unknown'
 
 
-def doctor(cwd, helper):
+def doctor(cwd, helper, *, as_json=False):
     configuration = load_config()
     supported, version = git_version()
     rows = [{'component': 'git', 'status': 'supported' if supported else 'unsupported', 'version': version, 'minimum': '2.54.0'}]
@@ -113,5 +114,5 @@ def doctor(cwd, helper):
     available = shutil.which('gitleaks') is not None
     rows.append({'component': 'gitleaks', 'status': 'disabled' if mode == 'off' else ('available' if available else 'missing'), 'mode': mode, 'note': 'Optional mode skips scanning with a warning when gitleaks is missing. Required mode blocks commits when gitleaks is missing.'})
     rows.append({'component': 'review', 'status': 'configured' if configuration['review']['command'] else 'not_configured', 'note': 'Configure review.command to use pre-ship review. External review workflows can use pre-ship record after review.'})
-    print(json.dumps({'configuration': str(config_path()), 'checks': rows, 'scope': 'Static registration only. Codex trust and native host execution require a separate smoke check.'}, ensure_ascii=False))
+    print_doctor({'configuration': str(config_path()), 'checks': rows, 'scope': 'Static registration only. Codex trust and native host execution require a separate smoke check.'}, as_json=as_json)
     return 0 if registration_ok and not (mode == 'required' and not available) else 1

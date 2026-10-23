@@ -51,6 +51,57 @@ git push -u origin HEAD
 When all configured agent markers are empty, commits run the same content checks without a receipt, and pushes pass through unchanged.
 Existing review workflows can use [`record`](docs/reviewer.md#external-review-and-record) after review passes for the exact target.
 
+## Commands
+
+The user commands are `review`, `record`, `doctor`, `events`, `install`, and `uninstall`.
+Run `pre-ship` or `pre-ship --help`, or add `--help` after a command to see its options.
+The installed Git and host hooks use hidden commands. Existing hook registrations can keep calling them.
+
+Use `review` to run the configured reviewer and save a receipt for the staged or committed target:
+
+```sh
+pre-ship review staged
+pre-ship review --mode committed --json
+```
+
+Use `record` when another workflow already reviewed the exact target:
+
+```sh
+pre-ship record staged --json
+```
+
+`review` and `record` default to staged. `review staged` and `review --mode staged` select the same target.
+All six commands print human-readable output by default. Each command accepts `--json`.
+
+```sh
+pre-ship doctor --cwd /path/to/repository
+pre-ship doctor --json --cwd /path/to/repository
+pre-ship events --json
+pre-ship install --json
+pre-ship uninstall
+pre-ship uninstall --json
+```
+
+### Output contract
+
+On success, `--json` writes only JSON to stdout. Errors use text on stderr and keep the command's exit code.
+`review --json` and `record --json` print the receipt object.
+`doctor --json` keeps its existing `configuration`, `checks`, and `scope` fields.
+The report goes to stdout when a check fails, and the command keeps its failure exit code.
+`events --json` keeps its existing `counts` and `skipped` fields.
+`install --json` prints the same report as `doctor --json`.
+If that report shows a doctor failure, `install` still prints the report to stdout and keeps its failure exit code.
+`uninstall --json` prints an object with `action` and `scope` fields.
+Without `--json`, `uninstall` prints: “Only registrations for this exact helper were removed. Other configuration was preserved.”
+
+For an `EXEMPTED` receipt, human output shows the status once on stdout.
+With `--json`, the receipt stays on stdout and the exemption warning goes to stderr.
+
+See [installation guidance](docs/installation.md#removal-and-repair) for the next configuration steps when `review.command` is not configured.
+
+Python 3.14 adds color to argparse help output. Python 3.11 through 3.13 show plain help.
+The standard library controls color with `NO_COLOR` and `FORCE_COLOR`.
+
 ## Documentation
 
 - [Configuration](docs/configuration.md): Global policy and agent detection.

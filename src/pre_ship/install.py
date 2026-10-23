@@ -154,7 +154,7 @@ def write_host(path, before, data):
             os.unlink(temporary)
 
 
-def configure(cwd, helper, *, install):
+def configure(cwd, helper, *, install, as_json=False):
     helper = helper.absolute()
     if install:
         validate_helper(helper)
@@ -202,6 +202,10 @@ def configure(cwd, helper, *, install):
     for host_path, before, desired in host_plans:
         write_host(host_path, before, desired)
     if install:
-        return doctor(cwd, helper)
-    print(json.dumps({'action': 'uninstall', 'scope': 'Only registrations for this exact helper were removed. Other configuration was preserved.'}))
+        return doctor(cwd, helper, as_json=as_json)
+    scope = 'Only registrations for this exact helper were removed. Other configuration was preserved.'
+    if as_json:
+        print(json.dumps({'action': 'uninstall', 'scope': scope}))
+    else:
+        print(scope)
     return 0

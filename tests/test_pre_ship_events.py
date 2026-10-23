@@ -1,5 +1,5 @@
+import hashlib
 import json
-from pathlib import Path
 import subprocess
 import unittest
 from unittest.mock import patch
@@ -33,9 +33,10 @@ class EventLogTests(GitHookFixture):
         return result
 
     def exempt(self, mode='staged'):
-        result = subprocess.run([str(SCRIPT), 'record', mode, '--verdict', 'EXEMPTED', '--reply', 'EXEMPT', '--reason', 'Native review pending'], cwd=self.repo, env=self.env, capture_output=True, text=True)
+        result = subprocess.run([str(SCRIPT), 'record', mode, '--json', '--verdict', 'EXEMPTED', '--reply', 'EXEMPT', '--reason', 'Native review pending'], cwd=self.repo, env=self.env, capture_output=True, text=True)
         self.assertEqual(0, result.returncode, result.stderr)
-        return Path(result.stdout.strip())
+        root = json.loads(result.stdout)['root']
+        return self.root / '.cache/pre-ship' / (hashlib.sha256(root.encode()).hexdigest()[:16] + '.json')
 
     def test_git_and_guard_events_never_copy_commands_findings_or_diffs(self):
         sentinel = 'private-command-value-0123456789'
@@ -52,7 +53,7 @@ class EventLogTests(GitHookFixture):
         raw = json.dumps(rows)
         for forbidden in [sentinel, secret, 'credential.txt', 'aws_access_key_id', '--no-verify']:
             self.assertNotIn(forbidden, raw)
-        summary = subprocess.run([str(SCRIPT), 'events'], env=self.env, capture_output=True, text=True)
+        summary = subprocess.run([str(SCRIPT), 'events', '--json'], env=self.env, capture_output=True, text=True)
         self.assertEqual(0, summary.returncode, summary.stderr)
         self.assertEqual(3, sum(row['count'] for row in json.loads(summary.stdout)['counts']))
 

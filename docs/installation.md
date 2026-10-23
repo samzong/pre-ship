@@ -26,6 +26,19 @@ Claude Code reads `~/.claude/settings.json`.
 Restart an active host if it does not reload its hook configuration.
 `doctor` inspects registration and Git's native hook list. It does not prove host execution or Codex trust.
 
+## Install and uninstall output
+
+Use `--json` to get machine-readable output. Run these commands to install or remove registrations:
+
+```sh
+pre-ship install
+pre-ship install --json
+pre-ship uninstall
+pre-ship uninstall --json
+```
+
+See the [command output contract](../README.md#output-contract) for JSON fields and stdout, stderr, and exit code behavior.
+
 ## Removal and repair
 
 To remove only this installation's registrations, run:
@@ -40,21 +53,39 @@ Installation is idempotent.
 If a write fails after an earlier write succeeds, registration can be partial.
 Repair the reported file, rerun `install`, and run `doctor`.
 
+When `review.command` is not configured, human output from `install` includes the next configuration step.
+The message gives the configuration path, a [configuration reference](configuration.md), and the `doctor` command.
+Set `review.command` in the global configuration before you run `review`.
+
 ## Diagnostics
 
-Use these commands to inspect the installation:
+Run `doctor` to inspect registration, Git support, configuration, and the secret scanner:
 
 ```sh
 pre-ship doctor --cwd /path/to/repository
-pre-ship events
 ```
 
-`doctor` returns nonzero for registration drift, unsupported Git, invalid configuration, or missing required gitleaks.
-An unconfigured reviewer is informational because external workflows can use [`record`](reviewer.md#external-review-and-record).
-`events` counts retained allow, block, and exemption observations by reason.
+The default output lists each check and groups shared repair steps below the results.
+Configuration guidance links to the online reference, including after a tool installation.
+The command returns a nonzero exit code when registration, Git support, configuration, or required gitleaks fails.
+Disabled Git or host hooks appear as failures.
+An unconfigured reviewer is informational because an external workflow can use [`record`](reviewer.md#external-review-and-record).
+
+Run `doctor --json` for a machine-readable report.
+
+Run `events` to view counts for retained allow, block, and exemption observations by reason:
+
+```sh
+pre-ship events
+pre-ship events --json
+```
+
+See the [command output contract](../README.md#output-contract) for JSON fields, stdout, stderr, and exit code behavior.
 
 Diagnostic events exclude commands, diffs, findings, exemption reasons, and commit messages.
 New files use mode 0600 and new directories use 0700.
 The log rotates at 1 MiB and retains about 2 MiB.
 A lock conflict or write failure loses observations without changing the gate result.
 The log is diagnostic data, not an audit source of truth.
+
+`doctor` can print limited status color in a terminal. It does not use color when `NO_COLOR` is set.
