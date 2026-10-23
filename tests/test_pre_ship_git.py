@@ -52,7 +52,7 @@ class GitHookFixture(unittest.TestCase):
 
 class GitHookTests(GitHookFixture):
     def manual_environment(self):
-        for key in ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'LODY_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID']:
+        for key in ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID']:
             self.env.pop(key, None)
 
     def test_manual_git_commands_skip_receipts_and_all_gate_policy(self):
@@ -69,7 +69,7 @@ class GitHookTests(GitHookFixture):
     def test_each_agent_session_marker_requires_receipts(self):
         self.manual_environment()
         self.stage('file', 'first\n')
-        for marker in ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'LODY_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID']:
+        for marker in ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID']:
             with self.subTest(marker=marker):
                 self.env[marker] = 'fixture'
                 self.assertIn('PASS receipt', self.run_git('commit', '-sm', 'agent commit', code=1).stderr)

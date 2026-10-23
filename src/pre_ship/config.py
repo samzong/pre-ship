@@ -5,7 +5,7 @@ import re
 import tomllib
 
 DEFAULTS = {
-    'agent_markers': ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'LODY_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID'],
+    'agent_markers': ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID'],
     'exemption_reply': 'EXEMPT',
     'gitleaks': {'mode': 'optional'},
     'push': {'protected_branches': ['main', 'master'], 'allow_protected': False},
@@ -34,10 +34,10 @@ def load_config():
     result = deepcopy(DEFAULTS)
     for key, value in data.items():
         if key not in result:
-            raise ValueError('Unknown pre-ship configuration key. Use the configuration reference in README.md.')
+            raise ValueError('Unknown pre-ship configuration key. Use the configuration reference in docs/configuration.md.')
         if isinstance(result[key], dict):
             if not isinstance(value, dict) or set(value) - set(result[key]):
-                raise ValueError('Invalid pre-ship configuration table. Use the configuration reference in README.md.')
+                raise ValueError('Invalid pre-ship configuration table. Use the configuration reference in docs/configuration.md.')
             result[key].update(value)
         else:
             result[key] = value

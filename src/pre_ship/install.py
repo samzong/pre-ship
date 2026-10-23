@@ -85,8 +85,8 @@ def host_plan(path, helper, host, install):
                     words = shlex.split(command['command'])
                 except ValueError:
                     continue
-                if any(Path(word).name in {'pre-ship', 'pre-ship-gate', 'pre_ship_gate.py'} for word in words) and not owned(command):
-                    raise ValueError(f'The {host} configuration contains another gate helper. Run {shlex.quote(next(word for word in words if Path(word).name in {"pre-ship", "pre-ship-gate", "pre_ship_gate.py"}))} uninstall, then run pre-ship install and pre-ship doctor. No configuration was changed.')
+                if any(Path(word).name == 'pre-ship' for word in words) and not owned(command):
+                    raise ValueError(f'The {host} configuration contains another gate helper. Run {shlex.quote(next(word for word in words if Path(word).name == "pre-ship"))} uninstall, then run pre-ship install and pre-ship doctor. No configuration was changed.')
         if found and agent_registration(path, helper, host) != 'registered':
             separate = []
             for entry in desired['hooks']['PreToolUse']:

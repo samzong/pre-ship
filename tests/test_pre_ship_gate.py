@@ -11,7 +11,7 @@ from pre_ship import cli as gate
 SCRIPT = Path(os.environ.get('PRE_SHIP_TEST_CLI', Path(__file__).resolve().parents[1] / 'bin' / 'pre-ship'))
 
 def isolated_environment(root):
-    markers = {'CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'LODY_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID'}
+    markers = {'CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID'}
     env = {key: value for key, value in os.environ.items() if not key.startswith(('GIT_', 'PIPX_')) and key not in markers}
     env.update(HOME=str(root), CODEX_HOME=str(root / '.codex'), XDG_CONFIG_HOME=str(root / '.config'), XDG_CACHE_HOME=str(root / '.cache'), XDG_DATA_HOME=str(root / '.local/share'), XDG_STATE_HOME=str(root / '.local/state'), GIT_CONFIG_GLOBAL=str(root / 'gitconfig'), GIT_CONFIG_NOSYSTEM='1', AI_AGENT='fixture')
     return env
