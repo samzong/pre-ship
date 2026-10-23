@@ -244,7 +244,7 @@ class ConfigurationReviewTests(unittest.TestCase):
     def test_foreign_agent_helpers_are_rejected_before_any_install_write(self):
         path = self.root / '.codex/hooks.json'
         path.parent.mkdir()
-        for helper in ['/opt/private/.agents/bin/pre-ship-gate', '/opt/private/.agents/bin/pre-ship']:
+        for helper in ['/opt/other/pre-ship']:
             with self.subTest(helper=helper):
                 data = {'unrelated': {'keep': True}, 'hooks': {'PreToolUse': [{'hooks': [{'type': 'command', 'command': helper + ' hook'}]}]}}
                 path.write_text(json.dumps(data))
@@ -257,7 +257,7 @@ class ConfigurationReviewTests(unittest.TestCase):
                 self.assertFalse((self.root / '.claude/settings.json').exists())
 
     def test_foreign_git_registration_is_preserved_with_executable_repair(self):
-        self.git('config', '--global', 'hook.preship-prepare.command', '/opt/private/pre-ship-gate prepare-commit-msg')
+        self.git('config', '--global', 'hook.preship-prepare.command', '/opt/other/pre-ship prepare-commit-msg')
         path = self.root / 'gitconfig'
         before = path.read_bytes()
         result = self.command('install')
