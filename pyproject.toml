@@ -1,0 +1,19 @@
+[build-system]
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
+[project]
+name = "pre-ship"
+version = "0.1.0"
+description = "Review gates for AI coding agents before Git commits and pushes"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "samzong"}]
+dependencies = []
+
+[project.scripts]
+pre-ship = "pre_ship.cli:main"
+
+[project.urls]
+Repository = "https://github.com/samzong/pre-ship"
