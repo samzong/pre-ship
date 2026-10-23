@@ -104,7 +104,8 @@ class AgentBypassTests(unittest.TestCase):
         gate.guard('env -uUNRELATED git status', self.cwd)
         gate.guard('env --unset=UNRELATED git status', self.cwd)
 
-    def test_hook_entrypoint_emits_supported_deny_json(self):
+    def test_hook_entrypoint_denies_without_agent_markers(self):
+        os.environ.pop('AI_AGENT')
         payload = {'cwd': str(self.cwd), 'tool_input': {'command': 'git commit --no-verify'}}
         result = subprocess.run([str(SCRIPT)], input=json.dumps(payload), capture_output=True, text=True)
         self.assertEqual(0, result.returncode)
