@@ -1,6 +1,5 @@
 # Contributing
 
-Keep Python runtime dependencies limited to the standard library.
 Support Python 3.11 or later on macOS and Linux.
 Use `uv` for the package environment and build. The isolated build uses `uv_build`.
 

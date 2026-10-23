@@ -1,6 +1,6 @@
 # Maintenance contract
 
-Keep Python runtime dependencies limited to the standard library. Support Python 3.11 or later on macOS and Linux. Use `uv` for the package environment and build.
+Support Python 3.11 or later on macOS and Linux. Use `uv` for the package environment and build.
 
 Run `uv run python -m unittest discover -s tests -v` and `uv build` before a PR. Integration tests must use a private HOME, host paths, and Git configuration. Never run install or uninstall against a contributor's real configuration during tests.
 
