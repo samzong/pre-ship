@@ -111,7 +111,7 @@ def doctor(cwd, helper):
     registration_ok = all(row['status'] in {'registered', 'supported'} for row in rows)
     mode = configuration['gitleaks']['mode']
     available = shutil.which('gitleaks') is not None
-    rows.append({'component': 'gitleaks', 'status': 'disabled' if mode == 'off' else ('available' if available else 'missing'), 'mode': mode, 'note': 'Optional mode skips scanning with a warning when gitleaks is missing. Required mode blocks agent commits.'})
+    rows.append({'component': 'gitleaks', 'status': 'disabled' if mode == 'off' else ('available' if available else 'missing'), 'mode': mode, 'note': 'Optional mode skips scanning with a warning when gitleaks is missing. Required mode blocks commits when gitleaks is missing.'})
     rows.append({'component': 'review', 'status': 'configured' if configuration['review']['command'] else 'not_configured', 'note': 'Configure review.command to use pre-ship review. External review workflows can use pre-ship record after review.'})
     print(json.dumps({'configuration': str(config_path()), 'checks': rows, 'scope': 'Static registration only. Codex trust and native host execution require a separate smoke check.'}, ensure_ascii=False))
     return 0 if registration_ok and not (mode == 'required' and not available) else 1
