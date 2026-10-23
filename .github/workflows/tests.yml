@@ -1,0 +1,76 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unittest:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.11', '3.14']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
+        with:
+          version: 0.13.4
+      - name: Install Python
+        run: uv python install "${{ matrix.python-version }}"
+      - name: Ensure Git 2.54 or newer
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            sudo apt-get update
+            sudo apt-get install --no-install-recommends -y build-essential libcurl4-openssl-dev libexpat1-dev gettext zlib1g-dev
+            git clone -q --depth 1 --branch v2.55.0 https://github.com/git/git.git "$RUNNER_TEMP/git-src"
+            test "$(git -C "$RUNNER_TEMP/git-src" rev-parse HEAD)" = e9019fcafe0040228b8631c30f97ae1adb61bcdc
+            make -C "$RUNNER_TEMP/git-src" -j2 prefix="$RUNNER_TEMP/git-install" all
+            make -C "$RUNNER_TEMP/git-src" prefix="$RUNNER_TEMP/git-install" install
+            export PATH="$RUNNER_TEMP/git-install/bin:$PATH"
+            echo "$RUNNER_TEMP/git-install/bin" >> "$GITHUB_PATH"
+          fi
+          version=$(git --version | awk '{print $3}')
+          IFS=. read -r major minor patch <<< "$version"
+          if (( major < 2 || (major == 2 && minor < 54) )); then
+            printf 'Git 2.54.0 or newer is required; found %s\n' "$version" >&2
+            exit 1
+          fi
+          git --version
+      - name: Install gitleaks
+        shell: bash
+        run: |
+          version=8.30.1
+          case "$RUNNER_OS" in
+            Linux) platform=linux ;;
+            macOS) platform=darwin ;;
+          esac
+          case "$(uname -m)" in
+            x86_64) architecture=x64 ;;
+            aarch64|arm64) architecture=arm64 ;;
+            *) printf 'Unsupported runner architecture: %s\n' "$(uname -m)" >&2; exit 1 ;;
+          esac
+          archive="gitleaks_${version}_${platform}_${architecture}.tar.gz"
+          release="https://github.com/gitleaks/gitleaks/releases/download/v${version}"
+          curl --fail --location --silent --show-error "$release/$archive" --output "$RUNNER_TEMP/$archive"
+          curl --fail --location --silent --show-error "$release/gitleaks_${version}_checksums.txt" --output "$RUNNER_TEMP/checksums.txt"
+          (cd "$RUNNER_TEMP" && grep "  $archive$" checksums.txt | shasum -a 256 --check)
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" gitleaks
+          install -m 0755 "$RUNNER_TEMP/gitleaks" "$RUNNER_TEMP/bin/gitleaks"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/bin/gitleaks" version
+      - name: Run tests
+        env:
+          PYTHONPATH: src
+          PRE_SHIP_TEST_CLI: ${{ github.workspace }}/bin/pre-ship
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: uv run --python '${{ matrix.python-version }}' python -m unittest discover -s tests -v
+      - name: Build package
+        run: uv build
