@@ -15,7 +15,7 @@ from .config import load_config
 from .output import print_events, print_receipt
 from .agent import guard
 from .events import GateError, log_event, event_summary
-from .git import agent_process, commit_message, prepare_commit, push_refs
+from .git import agent_coauthors, agent_process, commit_message, prepare_commit, push_refs
 
 AGE = 300
 
@@ -221,6 +221,7 @@ def main():
             if len(args.values) != 1:
                 raise ValueError('commit-msg requires the Git message path.')
             checked(cwd, 'staged', freshness=False)
+            agent_coauthors(args.values[0])
             commit_message(cwd, git, args.values[0])
         else:
             push_refs(cwd, git, checked, sys.stdin.read(), args.values)
