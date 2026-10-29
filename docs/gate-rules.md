@@ -10,6 +10,8 @@ Every commit requires valid whitespace, acceptable file sizes, a passing enabled
 Agent commits also require a current [receipt](reviewer.md#receipt-lifecycle).
 `git commit -s` supplies the `Signed-off-by` trailer.
 An exemption never disables these mechanical checks.
+The `commit-msg` hook rejects co-author trailers with an exact known agent email address, regardless of agent markers.
+Human co-author emails pass unchanged; the error gives the line number and commit message repair commands.
 
 New or growing staged files above approximately 5,000 tokens (`bytes / 4`) block.
 Lockfiles are excluded.
