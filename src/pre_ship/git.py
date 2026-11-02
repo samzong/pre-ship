@@ -158,8 +158,9 @@ def push_release_tag(cwd, git, local_oid, remote_ref, remote_oid, arguments):
         raise ValueError('Only new release tags are allowed. Moving or overwriting an existing tag is blocked.')
     number = r'(?:0|[1-9][0-9]*)'
     prerelease = rf'(?:{number}|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)'
-    if not re.fullmatch(rf'v{number}\.{number}\.{number}(?:-{prerelease}(?:\.{prerelease})*)?', remote_ref.removeprefix('refs/tags/')):
-        raise ValueError('Release tag names must use SemVer vMAJOR.MINOR.PATCH[-PRERELEASE], without build metadata.')
+    name = r'(?:[a-z0-9]+(?:-[a-z0-9]+)*-)?'
+    if not re.fullmatch(rf'{name}v{number}\.{number}\.{number}(?:-{prerelease}(?:\.{prerelease})*)?', remote_ref.removeprefix('refs/tags/')):
+        raise ValueError('Release tag names must use SemVer [NAME-]vMAJOR.MINOR.PATCH[-PRERELEASE], without build metadata. NAME is lowercase kebab-case.')
     try:
         annotated = git(cwd, '--no-replace-objects', 'cat-file', '-t', local_oid).strip() == b'tag'
     except subprocess.CalledProcessError as error:
