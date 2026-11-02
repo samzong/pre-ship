@@ -47,6 +47,12 @@ class ReleaseTagTests(fixtures.GitHookFixture):
         self.run_git('push', str(remote), 'refs/tags/v1.0.1-beta.13')
         self.assertEqual(self.run_git('rev-parse', 'v1.0.1-beta.13').stdout.strip(), self.remote_ref(remote, 'refs/tags/v1.0.1-beta.13'))
 
+        for tag in ['agent-v1.0.0', 'rx-agent-v0.2.0-rc.1', '2fa-v1.0.0']:
+            with self.subTest(tag=tag):
+                self.run_git('tag', '-a', '-m', 'release', tag, first)
+                self.run_git('push', str(remote), f'refs/tags/{tag}')
+                self.assertEqual(self.run_git('rev-parse', tag).stdout.strip(), self.remote_ref(remote, f'refs/tags/{tag}'))
+
     def test_pre_push_rejects_non_release_tag_updates_without_remote_changes(self):
         self.stage('file', 'first\n')
         self.commit('first')
@@ -58,7 +64,7 @@ class ReleaseTagTests(fixtures.GitHookFixture):
             self.assert_rejected_ref(remote, 'refs/tags/v1.1.0', 'refs/tags/v1.1.0', 'annotated')
         self.run_git('tag', '-d', 'v1.1.0')
 
-        for tag in ['v01.2.3', 'v1.2.3-', 'v1.2.3-01', 'v1.2.3+build.1', 'release-1.2.3']:
+        for tag in ['v01.2.3', 'v1.2.3-', 'v1.2.3-01', 'v1.2.3+build.1', 'release-1.2.3', 'Agent-v1.2.3', 'rx--agent-v1.2.3', 'agent-v1.2.3-', 'agent-1.2.3', 'agentv1.2.3', 'team/agent-v1.2.3']:
             with self.subTest(tag=tag):
                 self.run_git('tag', '-a', '-m', 'release', tag, head)
                 self.assert_rejected_ref(remote, f'refs/tags/{tag}', f'refs/tags/{tag}', 'SemVer')

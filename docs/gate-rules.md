@@ -39,6 +39,7 @@ Protected branch pushes block unless `push.allow_protected` is true.
 A fast-forward already contained in another remote's same-named tracking branch can pass without a receipt, including protected branches.
 
 A single new annotated SemVer tag can pass without a receipt.
+The tag name is `vMAJOR.MINOR.PATCH[-PRERELEASE]`, optionally after a lowercase kebab-case name and a hyphen, such as `v1.2.0` or `agent-v1.2.0`.
 Its commit must be an ancestor of the live remote main tip, or master when main is absent.
 The remote tip must exist locally.
 Moving tags, deleting refs, and pushing multiple refs block.
