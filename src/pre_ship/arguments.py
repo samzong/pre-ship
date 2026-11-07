@@ -31,13 +31,14 @@ def parse_arguments(argv, version):
         usage='%(prog)s [-h] [--version] <command> ...',
         description='Review changes before commits and pushes. Inspect and manage the gate installation.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='Review and receipts:\n  review       Run the configured reviewer and save a receipt.\n  record       Save a receipt after an external review passes.\n\nDiagnostics:\n  doctor       Inspect registration and show repair directions.\n  events       Summarize retained gate observations.\n\nInstallation:\n  install      Register Git and agent hooks for this helper.\n  uninstall    Remove registrations for this helper.\n\nStart here: pre-ship doctor\nCommand help: pre-ship <command> --help',
+        epilog='Content checks:\n  check        Run staged content checks without a review receipt.\n\nReview and receipts:\n  review       Run the configured reviewer and save a receipt.\n  record       Save a receipt after an external review passes.\n\nDiagnostics:\n  doctor       Inspect registration and show repair directions.\n  events       Summarize retained gate observations.\n\nInstallation:\n  install      Register Git and agent hooks for this helper.\n  uninstall    Remove registrations for this helper.\n\nStart here: pre-ship doctor\nCommand help: pre-ship <command> --help',
     )
     parser.set_defaults(cwd='.', verdict='PASS', reply=None, reason=None, json=False)
     parser.add_argument('--version', action='version', version=f'pre-ship {version}')
     parser.add_argument('--cwd', default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     commands = parser.add_subparsers(prog=parser.prog, dest='action', metavar='<command>', required=True, help=argparse.SUPPRESS)
     descriptions = {
+        'check': ('Run staged whitespace, size, and secret checks without reading or writing a review receipt. Commit hooks run these checks again.', 'pre-ship check\n  pre-ship check --cwd /path/to/repository --json'),
         'review': ('Run the configured reviewer and save a receipt for the unchanged target.', 'pre-ship review staged\n  pre-ship review committed --json'),
         'record': ('Save a receipt only after an external review passes for this exact target.', 'pre-ship record staged\n  pre-ship record committed --json'),
         'doctor': ('Inspect registration and show repair directions without changing configuration.', 'pre-ship doctor\n  pre-ship doctor --cwd /path/to/repository --json'),

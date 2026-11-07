@@ -34,6 +34,19 @@ Keep credentials out of the argument array.
 
 ## CLI output
 
+Before requesting a staged review, run `pre-ship check` to find content failures that do not depend on review.
+It runs the same staged whitespace, size, and secret checks as the commit hooks, with the same configuration.
+It does not read or write a review receipt or change the index.
+The checks stop at the first failure. Commit hooks run all checks again and still require an agent review receipt.
+
+```sh
+pre-ship check --cwd /path/to/repository --json
+```
+
+On success, `check --json` prints `{"result":"PASS","mode":"staged","root":"/path/to/repository"}`.
+`root` is the canonical repository root. This result is not a review verdict or receipt.
+Errors go to stderr and return exit code `1`, without a success object on stdout.
+
 `review` runs the configured reviewer and records a receipt for the exact target.
 It defaults to staged. Use `review staged` or `review --mode staged` for the staged target.
 Use `review committed` or `review --mode committed` for the last commit.
