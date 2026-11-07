@@ -38,10 +38,11 @@ All other fields have defaults. See the [configuration reference](docs/configura
 
 ## Daily use
 
-Review the final index before an agent commits, then review the last commit before push:
+Run the content checks before review. Review the final index before an agent commits, then review the last commit before push:
 
 ```sh
 git add path/to/changed-file
+pre-ship check
 pre-ship review staged
 git commit -s -m "Describe the change"
 pre-ship review committed
@@ -53,9 +54,20 @@ Existing review workflows can use [`record`](docs/reviewer.md#external-review-an
 
 ## Commands
 
-The user commands are `review`, `record`, `doctor`, `events`, `install`, and `uninstall`.
+The user commands are `check`, `review`, `record`, `doctor`, `events`, `install`, and `uninstall`.
 Run `pre-ship` or `pre-ship --help`, or add `--help` after a command to see its options.
 The installed Git and host hooks use hidden commands. Existing hook registrations can keep calling them.
+
+Use `check` to run the staged whitespace, size, and secret checks before review:
+
+```sh
+pre-ship check
+pre-ship check --cwd /path/to/repository --json
+```
+
+`check` does not read or write a review receipt or change the index.
+It uses the same content checks and secret-scanning configuration as the commit hooks.
+Commit hooks run all checks again. `check` does not replace independent review or the required receipt.
 
 Use `review` to run the configured reviewer and save a receipt for the staged or committed target:
 
@@ -71,7 +83,7 @@ pre-ship record staged --json
 ```
 
 `review` and `record` default to staged. `review staged` and `review --mode staged` select the same target.
-All six commands print human-readable output by default. Each command accepts `--json`.
+All seven commands print human-readable output by default. Each command accepts `--json`.
 
 ```sh
 pre-ship doctor --cwd /path/to/repository
@@ -85,6 +97,7 @@ pre-ship uninstall --json
 ### Output contract
 
 On success, `--json` writes only JSON to stdout. Errors use text on stderr and keep the command's exit code.
+`check --json` prints an object with `result`, `mode`, and `root` fields on success. If a content check fails, it writes text to stderr and returns exit code `1`.
 `review --json` and `record --json` print the receipt object.
 `doctor --json` keeps its existing `configuration`, `checks`, and `scope` fields.
 The report goes to stdout when a check fails, and the command keeps its failure exit code.

@@ -12,10 +12,10 @@ import time
 from . import __version__
 from .arguments import parse_arguments
 from .config import load_config
-from .output import print_events, print_receipt
+from .output import print_check, print_events, print_receipt
 from .agent import guard
 from .events import GateError, log_event, event_summary
-from .git import agent_coauthors, agent_process, commit_message, prepare_commit, push_refs
+from .git import agent_coauthors, agent_process, commit_message, prepare_commit, push_refs, staged_checks
 
 AGE = 300
 
@@ -193,7 +193,11 @@ def main():
             context['root'] = repository_root(cwd)
         if args.action != 'record' and (args.verdict != 'PASS' or args.reply is not None or args.reason is not None):
             raise ValueError('Exemption fields are valid only for record.')
-        if args.action == 'events':
+        if args.action == 'check':
+            root = Path(os.fsdecode(git(cwd, 'rev-parse', '--show-toplevel')).strip()).resolve()
+            staged_checks(root, git)
+            print_check({'result': 'PASS', 'mode': 'staged', 'root': str(root)}, as_json=args.json)
+        elif args.action == 'events':
             print_events(event_summary(), as_json=args.json)
         elif args.action == 'doctor':
             from .doctor import doctor

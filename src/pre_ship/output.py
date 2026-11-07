@@ -3,6 +3,14 @@ import os
 import sys
 
 
+def print_check(value, *, as_json):
+    if as_json:
+        print(json.dumps(value, ensure_ascii=False))
+        return
+    print('Pre-Ship: PASS (staged content checks)')
+    print(f'Repository: {value["root"]}')
+
+
 def print_receipt(path, *, as_json):
     value = json.loads(path.read_text())
     if as_json:

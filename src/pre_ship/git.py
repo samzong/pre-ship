@@ -141,13 +141,17 @@ def whitespace_gate(cwd):
         raise GateError('whitespace', 'Staged whitespace check failed. Run git diff --cached --check and resolve the reported errors.')
 
 
+def staged_checks(cwd, git):
+    whitespace_gate(cwd)
+    size_gate(cwd, git)
+    secrets_gate(cwd)
+
+
 def prepare_commit(cwd, git, check, arguments):
     if not arguments:
         raise ValueError('prepare-commit-msg requires the Git message path.')
     current = check(cwd, 'staged')
-    whitespace_gate(cwd)
-    size_gate(cwd, git)
-    secrets_gate(cwd)
+    staged_checks(cwd, git)
     commit_message(cwd, git, arguments[0])
     if check(cwd, 'staged') != current:
         raise ValueError('The index changed during the hook. Review the new target before committing.')

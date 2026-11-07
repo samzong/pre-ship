@@ -15,12 +15,45 @@ class CLIContractTests(GitHookFixture):
 
     def test_subcommand_usage_names_only_the_invoked_program_and_command(self):
         self.env['NO_COLOR'] = '1'
-        for action in ('review', 'record', 'doctor', 'events', 'install', 'uninstall'):
+        for action in ('check', 'review', 'record', 'doctor', 'events', 'install', 'uninstall'):
             with self.subTest(action=action):
                 usage = self.command(action, '--help').stdout.split('\n\n', 1)[0]
                 self.assertRegex(usage, r'^usage: pre-ship ' + action + r'(?:\s|$)')
                 self.assertNotIn('<command>', usage)
                 self.assertNotIn('--version', usage)
+
+    def test_check_runs_staged_content_checks_without_receipts_or_index_changes(self):
+        secret = 'AKIA' + 'QWERTYUIOPASDFGH'
+        index = self.repo / '.git/index'
+        receipts = self.root / '.cache/pre-ship'
+        for content, expected in [
+            ('trailing \n', 'Staged whitespace check failed'),
+            ('x' * 20001, '5,001 tokens'),
+            ('aws_access_key_id = ' + secret + '\n', 'Staged secret scan failed'),
+        ]:
+            with self.subTest(expected=expected):
+                self.stage('file', content)
+                (self.repo / 'file').write_text('clean working tree\n')
+                before = index.read_bytes()
+                result = self.command('check', '--json', code=1)
+                self.assertEqual('', result.stdout)
+                self.assertIn(expected, result.stderr)
+                self.assertNotIn(secret, result.stderr)
+                self.assertNotIn('PASS receipt', result.stderr)
+                self.assertEqual(before, index.read_bytes())
+                self.assertEqual([], list(receipts.glob('????????????????.json')))
+        self.stage('file', 'clean\n')
+        before = index.read_bytes()
+        self.assertIn('PASS (staged content checks)', self.command('check').stdout)
+        result = self.command('check', '--cwd', str(self.repo), '--json')
+        self.assertEqual({'result': 'PASS', 'mode': 'staged', 'root': str(self.repo)}, json.loads(result.stdout))
+        self.assertEqual('', result.stderr)
+        self.assertEqual(before, index.read_bytes())
+        self.assertEqual([], list(receipts.glob('????????????????.json')))
+        receipt = self.record()
+        receipt.write_text('invalid receipt')
+        self.command('check')
+        self.assertEqual('invalid receipt', receipt.read_text())
 
     def test_bare_invocation_shows_help_without_reading_stdin_and_registered_hosts_use_hook(self):
         process = subprocess.Popen([str(SCRIPT)], cwd=self.repo, env=self.env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
