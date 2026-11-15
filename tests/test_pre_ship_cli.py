@@ -119,6 +119,14 @@ class CLIContractTests(GitHookFixture):
         self.assertEqual({'action', 'scope'}, set(removed))
         self.assertEqual('uninstall', removed['action'])
 
+    def test_antigravity_hook_uses_tool_call_input_and_decision_output(self):
+        for command, expected in [('git commit --no-verify', 'deny'), ('git status', 'allow')]:
+            payload = {'hookEventName': 'PreToolUse', 'cwd': str(self.repo), 'toolCall': {'id': '1', 'name': 'run_command', 'args': {'CommandLine': command}}}
+            result = self.command('hook', payload=json.dumps(payload))
+            output = json.loads(result.stdout)
+            self.assertEqual(expected, output['decision'])
+            self.assertEqual('reason' in output, expected == 'deny')
+
     def test_hook_entrypoints_keep_legacy_arguments_and_host_protocol(self):
         self.stage('file', 'content\n')
         self.record()

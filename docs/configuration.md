@@ -17,7 +17,7 @@ The review command has no default executable.
 
 | Field | Default | Meaning |
 | --- | --- | --- |
-| `agent_markers` | `["CLAUDECODE", "AI_AGENT", "CLAUDE_CODE_SESSION_ID", "CODEX_SESSION_ID", "CODEX_THREAD_ID"]` | Environment variable names that identify an agent process. An empty list treats every Git operation as human. |
+| `agent_markers` | `["CLAUDECODE", "AI_AGENT", "CLAUDE_CODE_SESSION_ID", "CODEX_SESSION_ID", "CODEX_THREAD_ID", "ANTIGRAVITY_AGENT"]` | Environment variable names that identify an agent process. An empty list treats every Git operation as human. |
 | `exemption_reply` | `"EXEMPT"` | Literal owner reply required to record an exemption. It must contain 1 to 100 characters, including a non-space character. |
 | `review.command` | `[]` | Command arguments, executed without a shell from the repository root. Each argument must be a nonempty string. |
 | `gitleaks.mode` | `"optional"` | `optional` runs an installed scanner and warns when absent. `required` blocks when absent or failed. `off` skips scanning. |

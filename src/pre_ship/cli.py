@@ -143,17 +143,23 @@ def hook(context):
     if not isinstance(data, dict):
         raise ValueError('The hook input must be a JSON object.')
     context['root'] = repository_root(Path(data.get('cwd') or os.getcwd()))
-    tool = data.get('tool_input') or {}
+    if 'toolCall' in data:
+        context['antigravity'] = True
+        call = data['toolCall']
+        tool = call.get('args') if isinstance(call, dict) else None
+    else:
+        tool = data.get('tool_input')
+    tool = tool or {}
     if not isinstance(tool, dict):
         return
-    command = tool.get('command') or tool.get('cmd') or ''
+    command = tool.get('CommandLine') or tool.get('command') or tool.get('cmd') or ''
     if not isinstance(command, str) or not command:
         return
     if command.lstrip().startswith('*** Begin Patch\n'):
         if command.rstrip().endswith('\n*** End Patch'):
             return
         raise ValueError('Separate complete patch input from shell commands before running the Git bypass guard.')
-    cwd = Path(tool.get('workdir') or tool.get('cwd') or data.get('cwd') or os.getcwd()).expanduser().resolve()
+    cwd = Path(tool.get('workdir') or tool.get('cwd') or tool.get('Cwd') or data.get('cwd') or os.getcwd()).expanduser().resolve()
     context['root'] = repository_root(cwd)
     guard(command, cwd)
 
@@ -216,6 +222,8 @@ def main():
                 print('Pre-Ship: UNVERIFIED — EXEMPTED', file=sys.stderr)
         elif args.action == 'hook':
             hook(context)
+            if context.get('antigravity'):
+                print(json.dumps({'decision': 'allow'}))
         elif args.action == 'prepare-commit-msg':
             prepare_commit(cwd, git, checked, args.values)
         elif args.action == 'pre-applypatch':
@@ -238,6 +246,9 @@ def main():
         if isinstance(error, subprocess.CalledProcessError) and args.action in {'install', 'uninstall'}:
             from .install import global_path
             reason = f'Cannot update Git hook configuration at {global_path()}. Registration may be partial. Check permissions and lock files, then rerun {args.action} and doctor.'
+        if args.action == 'hook' and context.get('antigravity'):
+            print(json.dumps({'decision': 'deny', 'reason': reason}))
+            return 0
         if args.action == 'hook':
             print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'permissionDecision': 'deny', 'permissionDecisionReason': reason}}))
             return 0
