@@ -7,7 +7,7 @@ import tomllib
 CONFIGURATION_URL = 'https://github.com/samzong/pre-ship/blob/main/docs/configuration.md'
 
 DEFAULTS = {
-    'agent_markers': ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID'],
+    'agent_markers': ['CLAUDECODE', 'AI_AGENT', 'CLAUDE_CODE_SESSION_ID', 'CODEX_SESSION_ID', 'CODEX_THREAD_ID', 'ANTIGRAVITY_AGENT'],
     'exemption_reply': 'EXEMPT',
     'gitleaks': {'mode': 'optional'},
     'push': {'protected_branches': ['main', 'master'], 'allow_protected': False},

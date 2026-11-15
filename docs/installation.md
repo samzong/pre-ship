@@ -23,6 +23,15 @@ Installation does not change shared hook enable flags or take over an existing g
 Codex reads `~/.codex/hooks.json`, or `$CODEX_HOME/hooks.json` when set.
 In Codex, open `/hooks` and trust the new command.
 Claude Code reads `~/.claude/settings.json`.
+Antigravity reads `~/.gemini/config/hooks.json`. `install` does not write this file.
+Register the guard as a named hook for the `run_command` tool:
+
+```json
+{"pre-ship": {"PreToolUse": [{"matcher": "run_command", "hooks": [{"type": "command", "command": "/path/to/pre-ship hook"}]}]}}
+```
+
+The guard reads the Antigravity `toolCall` input and answers with a `decision` of `allow` or `deny`.
+`doctor` does not check this registration.
 Restart an active host if it does not reload its hook configuration.
 `doctor` inspects registration and Git's native hook list. It does not prove host execution or Codex trust.
 
