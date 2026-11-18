@@ -32,6 +32,16 @@ Register the guard as a named hook for the `run_command` tool:
 
 The guard reads the Antigravity `toolCall` input and answers with a `decision` of `allow` or `deny`.
 `doctor` does not check this registration.
+Copilot CLI reads every `*.json` file in `~/.copilot/hooks/`, or `$COPILOT_HOME/hooks/` when set. `install` does not write these files.
+Register the guard in its own file, such as `~/.copilot/hooks/pre-ship.json`:
+
+```json
+{"version": 1, "hooks": {"preToolUse": [{"type": "command", "bash": "/path/to/pre-ship hook", "timeoutSec": 30}]}}
+```
+
+The guard reads the Copilot `toolName` and `toolArgs` input, prints nothing to allow, and answers a denial with `permissionDecision` set to `deny`.
+Copilot allows the tool call when a hook times out.
+`doctor` does not check this registration.
 Restart an active host if it does not reload its hook configuration.
 `doctor` inspects registration and Git's native hook list. It does not prove host execution or Codex trust.
 

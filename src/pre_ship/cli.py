@@ -147,6 +147,11 @@ def hook(context):
         context['antigravity'] = True
         call = data['toolCall']
         tool = call.get('args') if isinstance(call, dict) else None
+    elif 'toolName' in data:
+        context['copilot'] = True
+        tool = data.get('toolArgs')
+        if isinstance(tool, str):
+            tool = json.loads(tool) if tool.strip() else None
     else:
         tool = data.get('tool_input')
     tool = tool or {}
@@ -248,6 +253,9 @@ def main():
             reason = f'Cannot update Git hook configuration at {global_path()}. Registration may be partial. Check permissions and lock files, then rerun {args.action} and doctor.'
         if args.action == 'hook' and context.get('antigravity'):
             print(json.dumps({'decision': 'deny', 'reason': reason}))
+            return 0
+        if args.action == 'hook' and context.get('copilot'):
+            print(json.dumps({'permissionDecision': 'deny', 'permissionDecisionReason': reason}))
             return 0
         if args.action == 'hook':
             print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'permissionDecision': 'deny', 'permissionDecisionReason': reason}}))
