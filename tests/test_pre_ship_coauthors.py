@@ -18,6 +18,13 @@ class AgentCoauthorTests(GitHookFixture):
         result = self.message('fixture\n\nCO-AUTHORED-BY: Claude <NOREPLY@ANTHROPIC.COM>', code=1)
         self.assertIn('Agent co-author', result.stderr)
 
+    def test_every_copilot_bot_trailer_is_rejected(self):
+        for email in ['223556219+Copilot@users.noreply.github.com', '198982749+copilot@users.noreply.github.com']:
+            with self.subTest(email=email):
+                result = self.message(f'fixture\n\nCo-authored-by: Copilot <{email}>', code=1)
+                self.assertIn('Agent co-author', result.stderr)
+        self.message('fixture\n\nCo-authored-by: Pilot <123+pilot@users.noreply.github.com>')
+
     def test_human_coauthors_are_preserved(self):
         for name in ['Claude', 'Devin', 'Jules']:
             with self.subTest(name=name):

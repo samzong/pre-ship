@@ -127,6 +127,18 @@ class CLIContractTests(GitHookFixture):
             self.assertEqual(expected, output['decision'])
             self.assertEqual('reason' in output, expected == 'deny')
 
+    def test_copilot_hook_reads_string_tool_args_and_prints_only_denials(self):
+        for args, expected in [(json.dumps({'command': 'git commit --no-verify'}), 'deny'), ({'command': 'git commit -n -m x'}, 'deny'), (json.dumps({'command': 'git status'}), None), ('not json', 'deny')]:
+            with self.subTest(args=args):
+                payload = {'timestamp': 1, 'cwd': str(self.repo), 'toolName': 'bash', 'toolArgs': args}
+                result = self.command('hook', payload=json.dumps(payload))
+                if expected is None:
+                    self.assertEqual('', result.stdout)
+                else:
+                    output = json.loads(result.stdout)
+                    self.assertEqual({'permissionDecision', 'permissionDecisionReason'}, set(output))
+                    self.assertEqual(expected, output['permissionDecision'])
+
     def test_hook_entrypoints_keep_legacy_arguments_and_host_protocol(self):
         self.stage('file', 'content\n')
         self.record()

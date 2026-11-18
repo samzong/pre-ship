@@ -92,13 +92,12 @@ def secrets_gate(cwd):
 def agent_coauthors(message):
     emails = {
         'noreply@openai.com', 'noreply@anthropic.com', 'cursoragent@cursor.com',
-        '198982749+copilot@users.noreply.github.com',
         '209825114+claude[bot]@users.noreply.github.com',
         '158243242+devin-ai-integration[bot]@users.noreply.github.com',
     }
     for number, line in enumerate(Path(message).read_text(errors='replace').splitlines(), 1):
         trailer = re.fullmatch(r'Co-authored-by:\s*[^<>]+<([^<>\s]+)>\s*', line.rstrip(), re.I)
-        if trailer and trailer[1].casefold() in emails:
+        if trailer and (trailer[1].casefold() in emails or trailer[1].casefold().endswith('+copilot@users.noreply.github.com')):
             raise GateError('agent_coauthor', f'Agent co-author trailer at line {number}. Remove that line, then retry git commit -s. For an existing commit, use git commit --amend -s.')
 
 
