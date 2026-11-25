@@ -39,7 +39,8 @@ jobs:
           import tomllib
 
           tag = os.environ["RELEASE_TAG"]
-          match = re.fullmatch(r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-(alpha|beta|rc)\.(0|[1-9][0-9]*))?", tag)
+          release_core = r"v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)"
+          match = re.fullmatch(release_core + r"(?:-(alpha|beta|rc)\.(0|[1-9][0-9]*))?", tag)
           if not match:
               raise SystemExit("Invalid SemVer release tag.")
           major, minor, patch, stage, number = match.groups()
@@ -59,6 +60,7 @@ jobs:
               raise SystemExit("HEAD does not match the release tag commit.")
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
               output.write(f"is_prerelease={'true' if stage else 'false'}\n")
+              output.write(f"notes_tag_pattern=^{release_core}$|^{re.escape(tag)}$\n")
           PY
 
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884
@@ -102,6 +104,8 @@ jobs:
 
       - name: Generate release notes
         uses: orhun/git-cliff-action@a9a95522b26fe6403f7bb24031f21fb573d0f5ff
+        env:
+          GIT_CLIFF_TAG_PATTERN: ${{ steps.meta.outputs.notes_tag_pattern }}
         with:
           version: v2.14.1
           config: cliff.toml
