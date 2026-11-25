@@ -114,6 +114,31 @@ When `review.command` is configured, the only next step is `Run pre-ship review 
 When `review.command` is empty, the next step begins `No review command is configured.`
 It then says `After an external review passes for this exact target, run pre-ship record {mode} --cwd {quoted-root}.`
 
+## Branch deletion receipts
+
+Before recording a deletion receipt, obtain owner authorization and review the exact remote branch and object ID.
+Make sure that the branch has no open PR and that the deletion stays within the authorized scope.
+The external workflow owns these decisions. pre-ship does not query a hosting service or authenticate the authorization.
+
+```sh
+pre-ship record-deletion --remote origin --ref refs/heads/old --expected-oid <SHA>
+git push --force-with-lease=refs/heads/old:<SHA> origin :refs/heads/old
+```
+
+Replace `<SHA>` with the reviewed remote object ID.
+The named remote must have exactly one push URL, and the live branch must match the expected object ID.
+The receipt binds the canonical worktree root, push URL hash, full branch ref, and expected object ID.
+Only the latest deletion receipt for a worktree remains valid. It expires after five minutes.
+Both recording and pushing reject configured protected branches, non-branch refs, and the live remote default branch.
+`push.allow_protected` does not override deletion protection.
+A changed target needs a new review and receipt. Dry runs and real pushes use the same checks.
+Neither consumes the receipt. The receipt can be reused for the same target within its five-minute lifetime.
+
+`record-deletion --json` prints a version `1` receipt with `root`, `mode`, `remote`, `ref`, `oid`, `verdict`, and `created_at` fields.
+`mode` is `deletion`, `remote` is the SHA-256 hash of the push URL, and `verdict` is `PASS`.
+Deletion receipts are separate from staged and committed receipts and do not support exemptions.
+They use the same private cache directory, with a `-deletion.json` filename suffix.
+
 ## Exemptions
 
 If evidence remains unavailable, report that gap to the owner first.

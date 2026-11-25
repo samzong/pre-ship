@@ -31,7 +31,7 @@ def parse_arguments(argv, version):
         usage='%(prog)s [-h] [--version] <command> ...',
         description='Review changes before commits and pushes. Inspect and manage the gate installation.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='Content checks:\n  check        Run staged content checks without a review receipt.\n\nReview and receipts:\n  review       Run the configured reviewer and save a receipt.\n  record       Save a receipt after an external review passes.\n\nDiagnostics:\n  doctor       Inspect registration and show repair directions.\n  events       Summarize retained gate observations.\n\nInstallation:\n  install      Register Git and agent hooks for this helper.\n  uninstall    Remove registrations for this helper.\n\nStart here: pre-ship doctor\nCommand help: pre-ship <command> --help',
+        epilog='Content checks:\n  check        Run staged content checks without a review receipt.\n\nReview and receipts:\n  review       Run the configured reviewer and save a receipt.\n  record       Save a receipt after an external review passes.\n  record-deletion  Save a receipt for one reviewed remote branch deletion.\n\nDiagnostics:\n  doctor       Inspect registration and show repair directions.\n  events       Summarize retained gate observations.\n\nInstallation:\n  install      Register Git and agent hooks for this helper.\n  uninstall    Remove registrations for this helper.\n\nStart here: pre-ship doctor\nCommand help: pre-ship <command> --help',
     )
     parser.set_defaults(cwd='.', verdict='PASS', reply=None, reason=None, json=False)
     parser.add_argument('--version', action='version', version=f'pre-ship {version}')
@@ -41,6 +41,7 @@ def parse_arguments(argv, version):
         'check': ('Run staged whitespace, size, and secret checks without reading or writing a review receipt. Commit hooks run these checks again.', 'pre-ship check\n  pre-ship check --cwd /path/to/repository --json'),
         'review': ('Run the configured reviewer and save a receipt for the unchanged target.', 'pre-ship review staged\n  pre-ship review committed --json'),
         'record': ('Save a receipt only after an external review passes for this exact target.', 'pre-ship record staged\n  pre-ship record committed --json'),
+        'record-deletion': ('Save a receipt only after an external review approves one remote branch deletion.', 'pre-ship record-deletion --remote origin --ref refs/heads/old --expected-oid <SHA>'),
         'doctor': ('Inspect registration and show repair directions without changing configuration.', 'pre-ship doctor\n  pre-ship doctor --cwd /path/to/repository --json'),
         'events': ('Summarize retained gate observations by result and reason.', 'pre-ship events\n  pre-ship events --json'),
         'install': ('Register Git and agent hooks for this installed helper.', 'pre-ship install\n  pre-ship install --json'),
@@ -50,6 +51,10 @@ def parse_arguments(argv, version):
         command = commands.add_parser(action, description=description, formatter_class=argparse.RawDescriptionHelpFormatter, epilog=f'Examples:\n  {example}')
         command.add_argument('--cwd', default=argparse.SUPPRESS, metavar='PATH', help='Repository directory (default: current directory).')
         command.add_argument('--json', action='store_true', help='Write the result as JSON. Errors stay on stderr.')
+        if action == 'record-deletion':
+            command.add_argument('--remote', required=True, help='Named Git remote with one push URL.')
+            command.add_argument('--ref', required=True, help='Full remote branch ref approved for deletion.')
+            command.add_argument('--expected-oid', required=True, help='Reviewed remote branch object ID.')
         if action in {'review', 'record'}:
             command.add_argument('target_mode', nargs='?', choices=MODES, metavar='MODE', help='staged or committed (default: staged).')
             command.add_argument('--mode', choices=MODES, help='Alternative to positional MODE.')

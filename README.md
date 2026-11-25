@@ -54,7 +54,7 @@ Existing review workflows can use [`record`](docs/reviewer.md#external-review-an
 
 ## Commands
 
-The user commands are `check`, `review`, `record`, `doctor`, `events`, `install`, and `uninstall`.
+The user commands are `check`, `review`, `record`, `record-deletion`, `doctor`, `events`, `install`, and `uninstall`.
 Run `pre-ship` or `pre-ship --help`, or add `--help` after a command to see its options.
 The installed Git and host hooks use hidden commands. Existing hook registrations can keep calling them.
 
@@ -83,7 +83,11 @@ pre-ship record staged --json
 ```
 
 `review` and `record` default to staged. `review staged` and `review --mode staged` select the same target.
-All seven commands print human-readable output by default. Each command accepts `--json`.
+All user commands print human-readable output by default. Each command accepts `--json`.
+
+Use [`record-deletion`](docs/reviewer.md#branch-deletion-receipts) after an external review approves one remote branch deletion.
+The receipt binds the repository, push URL, full branch ref, and expected object ID for five minutes.
+It does not authorize tag deletion or deletion of protected branches.
 
 ```sh
 pre-ship doctor --cwd /path/to/repository
