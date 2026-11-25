@@ -1,3 +1,17 @@
+
+
+## [0.1.1] (2026-11-25)
+
+
+### Features
+
+* **push:** permit reviewed remote branch deletion (#22)
+
+
+### Documentation
+
+* **install:** pin the v0.1.0 release (#21)
+
 ## [0.1.0] (2026-11-25)
 
 
