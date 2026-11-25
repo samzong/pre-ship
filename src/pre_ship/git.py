@@ -8,6 +8,7 @@ import sys
 from .config import DEFAULTS, load_config
 
 from .events import GateError
+from .deletion import check_deletion
 
 TOKEN_LIMIT = 5000
 LOCKFILES = {'package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'bun.lockb', 'packages.lock.json', 'Package.resolved', 'go.sum', 'gradle.lockfile', '.terraform.lock.hcl'}
@@ -236,8 +237,11 @@ def push_refs(cwd, git, check, data, arguments=()):
     if len(lines) != 1 or len(lines[0]) != 4:
         raise ValueError('Push exactly one ref. Multiple refs and malformed ref updates are blocked. Do not use --no-verify.')
     local_ref, local_oid, remote_ref, remote_oid = lines[0]
-    if not re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', local_oid) or set(local_oid) == {'0'}:
-        raise ValueError('Ref deletion or an invalid local object ID is blocked. Do not use --no-verify.')
+    if not re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', local_oid):
+        raise ValueError('An invalid local object ID is blocked. Do not use --no-verify.')
+    if set(local_oid) == {'0'}:
+        check_deletion(cwd, git, local_ref, local_oid, remote_ref, remote_oid, arguments)
+        return
     if remote_ref.startswith('refs/tags/'):
         push_release_tag(cwd, git, local_oid, remote_ref, remote_oid, arguments)
         return

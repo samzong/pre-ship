@@ -16,6 +16,7 @@ from .output import print_check, print_events, print_receipt
 from .agent import guard
 from .events import GateError, log_event, event_summary
 from .git import agent_coauthors, agent_process, commit_message, prepare_commit, push_refs, staged_checks
+from .deletion import record_deletion
 
 AGE = 300
 
@@ -216,6 +217,8 @@ def main():
         elif args.action in {'install', 'uninstall'}:
             from .install import configure
             return configure(cwd, Path(sys.argv[0]).absolute(), install=args.action == 'install', as_json=args.json)
+        elif args.action == 'record-deletion':
+            print_receipt(record_deletion(cwd, git, args.remote, args.ref, args.expected_oid), as_json=args.json)
         elif args.action in {'review', 'record'}:
             mode = args.mode or args.target_mode or 'staged'
             if args.action == 'review':

@@ -42,8 +42,12 @@ A single new annotated SemVer tag can pass without a receipt.
 The tag name is `vMAJOR.MINOR.PATCH[-PRERELEASE]`, optionally after a lowercase kebab-case name and a hyphen, such as `v1.2.0` or `agent-v1.2.0`.
 Its commit must be an ancestor of the live remote main tip, or master when main is absent.
 The remote tip must exist locally.
-Moving tags, deleting refs, and pushing multiple refs block.
+Moving tags, deleting tags, and pushing multiple refs block.
 URL rewrites that prevent remote ancestry proof block tag pushes.
+
+A single branch deletion requires a current [deletion receipt](reviewer.md#branch-deletion-receipts) for the exact target.
+Protected branches and the live remote default branch cannot be deleted, even when `push.allow_protected` is true.
+Deletion receipts do not replace commit or push receipts for code changes.
 
 ## Merge and replay operations
 
