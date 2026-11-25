@@ -15,7 +15,7 @@ pre-ship has no runtime dependencies outside the Python standard library.
 Install once for all repositories with [uv](https://docs.astral.sh/uv/guides/tools/):
 
 ```sh
-uv tool install git+https://github.com/samzong/pre-ship@v0.1.0
+uv tool install git+https://github.com/samzong/pre-ship@v0.1.1
 pre-ship --version
 pre-ship install
 pre-ship doctor --cwd /path/to/repository
