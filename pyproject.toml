@@ -17,3 +17,8 @@ pre-ship = "pre_ship.cli:main"
 
 [project.urls]
 Repository = "https://github.com/samzong/pre-ship"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
